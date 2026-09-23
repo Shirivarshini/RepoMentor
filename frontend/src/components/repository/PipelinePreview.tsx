@@ -1,38 +1,20 @@
-const STEPS = [
-  { name: 'Collect', detail: 'Repository metadata, file tree, and relevant sources' },
-  { name: 'Analyze', detail: 'Languages, frameworks, entry points, important modules' },
-  { name: 'Parse', detail: 'Functions, classes, imports, and routes with line ranges' },
-  { name: 'Chunk + embed', detail: 'Logical code chunks stored for semantic search' },
-  { name: 'Retrieve', detail: 'The code most relevant to your question' },
-  { name: 'Explain', detail: 'Answers grounded in cited source files' },
-] as const
+import { useState } from 'react'
+import { Braces, CircleCheck, FileCode2, GitBranch, Network } from 'lucide-react'
 
-/** Static description of how RepoMentor reads a repository. */
+const previews = {
+  overview: <><div className="preview-stats"><span><strong>219</strong> files</span><span><strong>7</strong> modules</span><span><strong>4</strong> entry points</span></div><div className="preview-summary"><p>WHAT THIS REPOSITORY APPEARS TO BE</p><strong>A structured web application with clear service boundaries.</strong></div></>,
+  architecture: <div className="mini-architecture"><span>frontend</span><i /><span>api</span><i /><span>service</span><i /><span>data</span></div>,
+  sources: <div className="preview-source"><FileCode2 size={17} /><div><code>app/routes.py</code><small>lines 24–58 · create_app()</small></div><CircleCheck size={16} /></div>,
+}
+
 export default function PipelinePreview() {
-  return (
-    <section
-      aria-labelledby="pipeline-heading"
-      className="rounded-card border border-graphite bg-onyx p-6"
-    >
-      <h2 id="pipeline-heading" className="text-eyebrow uppercase tracking-[0.14em] text-copper">
-        How RepoMentor reads a repository
-      </h2>
-      <ol className="mt-6 flex flex-col">
-        {STEPS.map((step, index) => (
-          <li
-            key={step.name}
-            className="flex items-baseline gap-4 border-t border-graphite py-4 first:border-t-0 first:pt-0 last:pb-0"
-          >
-            <span className="w-6 shrink-0 text-eyebrow text-steel">
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <div>
-              <p className="text-body-xs font-medium text-paper-white">{step.name}</p>
-              <p className="text-body-xs text-fog">{step.detail}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
+  const [view, setView] = useState<keyof typeof previews>('overview')
+  return <section className="product-preview" aria-label="RepoMentor product preview">
+    <div className="preview-topline"><span><GitBranch size={14} /> pallets / flask</span><span className="preview-status"><i /> ANALYZING</span></div>
+    <div className="preview-tabs" role="tablist" aria-label="Preview sections">
+      {(['overview', 'architecture', 'sources'] as const).map(item => <button key={item} role="tab" aria-selected={view === item} onClick={() => setView(item)}>{item === 'architecture' && <Network size={13} />}{item === 'sources' && <Braces size={13} />}{item}</button>)}
+    </div>
+    <div className="preview-content">{previews[view]}</div>
+    <div className="preview-footer"><span>Repository evidence</span><span>Read-only analysis</span></div>
+  </section>
 }
