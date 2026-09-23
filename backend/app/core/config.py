@@ -32,7 +32,9 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = "http://localhost:5173"
     github_token: SecretStr = SecretStr("")
     gemini_api_key: SecretStr = SecretStr("")
-    gemini_generation_model: str = "gemini-2.5-flash"
+    # Gemini 2.5 Flash has been retired for new API users. This stable Flash Lite
+    # alias remains broadly available and is suitable for grounded JSON responses.
+    gemini_generation_model: str = "gemini-flash-lite-latest"
     embedding_model: str = "gemini-embedding-001"
     gemini_retry_attempts: int = 7
     github_http_timeout_seconds: float = 15

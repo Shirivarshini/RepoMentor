@@ -67,7 +67,7 @@ See `.env.example`. Important settings:
 |---|---|
 | GEMINI_API_KEY | Enables embeddings and Q&A; never sent to the frontend |
 | GITHUB_TOKEN | Optional increased quota for public GitHub API calls |
-| GEMINI_GENERATION_MODEL | Default gemini-2.5-flash; configurable |
+| GEMINI_GENERATION_MODEL | Default `gemini-flash-lite-latest`; configurable |
 | EMBEDDING_MODEL | Default gemini-embedding-001; changing it requires reanalysis |
 | DATABASE_URL | Required for direct backend startup; Compose supplies it |
 | BACKEND_PORT / FRONTEND_PORT | Host ports; defaults 8000 / 5173 |

@@ -48,6 +48,12 @@ class GeminiProvider:
                     raise AppError(
                         code, "Gemini rate limit was reached. Retry repository analysis shortly."
                     )
+                if response.status_code == 404:
+                    raise AppError(
+                        code,
+                        "The configured Gemini generation model is unavailable. "
+                        "Set GEMINI_GENERATION_MODEL to a model returned by Gemini's models API.",
+                    )
                 if response.status_code != 200:
                     raise AppError(
                         code, "Gemini request failed or quota was exceeded. Retry later."
