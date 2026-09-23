@@ -1,0 +1,75 @@
+# Development environment: PostgreSQL + pgvector, FastAPI (with reload), and the Vite dev server.
+# Every value has a default, so `docker compose up --build` works without a .env file.
+# Copy .env.example to .env to change settings.
+name: repomentor
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-repomentor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-repomentor}
+      POSTGRES_DB: ${POSTGRES_DB:-repomentor}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ defers expansion to the container, where these variables are set.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    # The database is not published to the host by default.
+    # Uncomment to reach it from the host (e.g. to run the backend outside Docker):
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_GENERATION_MODEL: ${GEMINI_GENERATION_MODEL:-gemini-2.5-flash}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-001}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-repomentor}:${POSTGRES_PASSWORD:-repomentor}@db:5432/${POSTGRES_DB:-repomentor}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    # Apply migrations, then start the API with auto-reload.
+    command: >
+      sh -c "alembic upgrade head &&
+      exec uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000
+      --reload --reload-dir app --no-access-log"
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    environment:
+      # Where the Vite dev server forwards /api and /health.
+      BACKEND_PROXY_TARGET: http://backend:8000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      # Keep the container's node_modules; do not shadow it with the host directory.
+      - /app/node_modules
+
+volumes:
+  postgres_data:

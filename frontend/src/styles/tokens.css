@@ -1,0 +1,65 @@
+/*
+ * RepoMentor design tokens. Source of truth: docs/DESIGN.md.
+ * Token names are Tailwind theme namespaces, so they become utilities directly:
+ *   --color-copper -> text-copper / bg-copper / border-copper
+ *   --radius-pill  -> rounded-pill
+ *   --font-ivy-presto -> font-ivy-presto
+ *   --text-heading-lg -> text-heading-lg
+ */
+@theme {
+  /* The default Tailwind palette is removed on purpose: no colors outside the design system. */
+  --color-*: initial;
+
+  --color-obsidian: #08080a; /* page canvas */
+  --color-onyx: #040406; /* card surface */
+  --color-carbon: #121317; /* panels and inputs */
+  --color-graphite: #1c1d22; /* hairline borders */
+  --color-slate: #2e3038; /* secondary borders */
+  --color-smoke: #464853; /* tertiary structure */
+  --color-ash: #5e616e; /* muted text */
+  --color-steel: #777a88; /* icons, secondary controls */
+  --color-fog: #9194a1; /* descriptions and helper text */
+  --color-mist: #acafb9; /* supplementary text */
+  --color-silver: #c7c9d1; /* medium-emphasis text */
+  --color-bone: #e2e3e9; /* default body text */
+  --color-paper-white: #ffffff; /* primary headings/actions */
+  --color-copper: #cc9166; /* labels, links, code-analysis accents (use sparingly) */
+
+  /* Ivy Presto is licensed; Playfair Display (self-hosted via @fontsource) is the fallback. */
+  --font-ivy-presto: 'Ivy Presto', 'Playfair Display', serif;
+  --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-nav: 2px;
+  --radius-card: 10px;
+  --radius-pill: 9999px;
+
+  /* Type scale (size / line-height). */
+  --text-eyebrow: 13px;
+  --text-eyebrow--line-height: 1;
+  --text-body-xs: 16px;
+  --text-body-xs--line-height: 1.5;
+  --text-body-sm: 18px;
+  --text-body-sm--line-height: 1.38;
+  --text-body: 20px;
+  --text-body--line-height: 1.38;
+  --text-subheading: 24px;
+  --text-subheading--line-height: 1;
+  --text-heading-sm: 44px;
+  --text-heading-sm--line-height: 1.38;
+  --text-heading: 52px;
+  --text-heading--line-height: 1.13;
+  --text-heading-lg: 64px;
+  --text-heading-lg--line-height: 1.13;
+  --text-display: 88px;
+  --text-display--line-height: 1;
+}
+
+:root {
+  --page-max-width: 1216px;
+  --section-gap: 160px;
+  --card-padding: 24px;
+  --element-gap: 8px;
+
+  --border-hairline: #1c1d22;
+  --border-secondary: #2e3038;
+}

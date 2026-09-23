@@ -1,0 +1,36 @@
+name: repomentor-production
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: repomentor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: repomentor
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U repomentor -d repomentor]
+      interval: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://repomentor:${POSTGRES_PASSWORD}@db:5432/repomentor
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GEMINI_GENERATION_MODEL: ${GEMINI_GENERATION_MODEL:-gemini-2.5-flash}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-001}
+    command: [sh, -c, 'alembic upgrade head && exec uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 --no-access-log']
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.production
+    ports: ['127.0.0.1:${FRONTEND_PORT:-5173}:8080']
+    restart: unless-stopped
+    depends_on:
+      backend: {condition: service_healthy}
+volumes:
+  postgres_data:
