@@ -101,6 +101,7 @@ def test_analysis_evidence_and_import_graph():
     assert result["frameworks"][0]["evidence"][0]["start_line"] == 1
     assert views["architecture"]["edges"][0]["source"] == "app"
     assert views["architecture"]["edges"][0]["target"] == "services"
+    assert views["architecture"]["nodes"][0]["description"].endswith("component.")
     assert views["data_flow"]["flows"][0]["steps"][0]["inferred"] is True
     assert views["setup"]["environment_variables"][0]["default"] is None
     assert views["setup"]["installation"][0]["commands"] == ["pip install -r requirements.txt"]

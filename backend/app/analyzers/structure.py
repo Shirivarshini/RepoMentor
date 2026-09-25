@@ -159,6 +159,43 @@ def analyze(
 def insights(result: dict[str, Any]) -> dict[str, Any]:
     files = result["files"]
     paths = {f["path"] for f in files}
+
+    def resolve_import(base: str) -> str | None:
+        """Resolve an import to an analyzed file, including repositories in a subdirectory."""
+        candidates = [base] + [base + ext for ext in LANGUAGES]
+        candidates += [base + "/__init__.py", base + "/index.ts", base + "/index.tsx"]
+        for candidate in candidates:
+            if candidate in paths:
+                return candidate
+            nested = sorted(path for path in paths if path.endswith("/" + candidate))
+            if nested:
+                return nested[0]
+        return None
+
+    def architecture_group(path: str) -> tuple[str, str, str]:
+        """Return a role-sized component, rather than a top-level directory module."""
+        parts = path.split("/")
+        if len(parts) >= 3 and parts[0] == "backend" and parts[1] == "app":
+            layer = parts[2]
+            labels = {
+                "api": ("API", "api"), "services": ("Services", "service"),
+                "ai": ("AI & retrieval", "ai"), "db": ("Database access", "database"),
+                "models": ("Data models", "model"), "analyzers": ("Code analysis", "analyzer"),
+                "github": ("GitHub integration", "external"), "core": ("Application core", "core"),
+            }
+            label, kind = labels.get(layer, (f"Backend / {layer}", "backend"))
+            return (f"backend-app-{layer}", label, kind)
+        if len(parts) >= 3 and parts[0] == "frontend" and parts[1] == "src":
+            layer = parts[2]
+            labels = {
+                "pages": ("Application screens", "ui"), "components": ("UI components", "ui"),
+                "services": ("Frontend API client", "client"), "types": ("Frontend types", "model"),
+            }
+            label, kind = labels.get(layer, (f"Frontend / {layer}", "frontend"))
+            return (f"frontend-src-{layer}", label, kind)
+        root = parts[0] if len(parts) > 1 else "root"
+        return (root, root.replace("-", " ").title(), "configuration")
+
     links = set()
     for file in files:
         for statement in file["imports"]:
@@ -175,44 +212,36 @@ def insights(result: dict[str, Any]) -> dict[str, Any]:
                         )
                     ]
                 for base in bases:
-                    target = next(
-                        (
-                            p
-                            for p in [base]
-                            + [base + ext for ext in LANGUAGES]
-                            + [base + "/__init__.py", base + "/index.ts", base + "/index.tsx"]
-                            if p in paths
-                        ),
-                        None,
-                    )
+                    target = resolve_import(base)
                     if target and target != file["path"]:
                         links.add((file["path"], target))
-    module_for = {p: m["id"] for m in result["modules"] for p in m["files"]}
+    component_for = {file["path"]: architecture_group(file["path"])[0] for file in files}
+    components: dict[str, dict[str, Any]] = {}
+    for file in files:
+        component_id, label, kind = architecture_group(file["path"])
+        component = components.setdefault(
+            component_id,
+            {"id": component_id, "label": label, "type": kind, "files": [], "inferred": False},
+        )
+        component["files"].append(file["path"])
     edges = set()
     for origin, target in links:
-        a, b = module_for[origin], module_for[target]
+        a, b = component_for[origin], component_for[target]
         if a != b:
             edges.add((a, b))
-    for module in result["modules"]:
-        module["depends_on"] = sorted(b for a, b in edges if a == module["id"])
-    nodes = [
-        {
-            "id": m["id"],
-            "label": m["name"],
-            "type": "other",
-            "description": m["purpose"],
-            "files": m["files"],
-            "inferred": False,
-        }
-        for m in result["modules"]
-    ]
+    nodes = []
+    for component in components.values():
+        component["description"] = (
+            f"{len(component['files'])} analyzed files in the {component['label'].lower()} component."
+        )
+        nodes.append(component)
     graph = {
         "nodes": nodes,
         "edges": [
             {"id": f"edge-{i}", "source": a, "target": b, "label": "imports", "inferred": False}
             for i, (a, b) in enumerate(sorted(edges))
         ],
-        "summary": "Directory groups and resolved local imports. "
+        "summary": "Component-level dependencies derived from resolved local imports. "
         "This is a structural view, not a runtime trace.",
     }
     flows: list[dict[str, Any]] = []
