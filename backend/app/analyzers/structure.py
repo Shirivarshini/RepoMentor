@@ -177,6 +177,8 @@ def insights(result: dict[str, Any]) -> dict[str, Any]:
         parts = path.split("/")
         if len(parts) >= 3 and parts[0] == "backend" and parts[1] == "app":
             layer = parts[2]
+            if "." in layer:
+                return ("backend-app", "Backend application", "backend")
             labels = {
                 "api": ("API", "api"), "services": ("Services", "service"),
                 "ai": ("AI & retrieval", "ai"), "db": ("Database access", "database"),
@@ -187,6 +189,8 @@ def insights(result: dict[str, Any]) -> dict[str, Any]:
             return (f"backend-app-{layer}", label, kind)
         if len(parts) >= 3 and parts[0] == "frontend" and parts[1] == "src":
             layer = parts[2]
+            if "." in layer:
+                return ("frontend-app", "Frontend application", "frontend")
             labels = {
                 "pages": ("Application screens", "ui"), "components": ("UI components", "ui"),
                 "services": ("Frontend API client", "client"), "types": ("Frontend types", "model"),
